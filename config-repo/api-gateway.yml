@@ -18,3 +18,5 @@ spring:
           uri: lb://sensor-service
           predicates:
             - Path=/api/sensors/**
+          filters:
+            - AuthenticationFilter
