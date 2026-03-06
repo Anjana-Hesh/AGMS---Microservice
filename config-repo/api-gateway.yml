@@ -12,16 +12,22 @@ spring:
   cloud:
     gateway:
       routes:
+
+        - id: identity-service
+          uri: lb://identity-service
+          predicates:
+            - Path=/auth/**
+
         - id: zone-service
           uri: lb://zone-service
           predicates:
-            - Path=/api/zones/**
+            - Path=/api/v1/zones/**
           filters:
             - AuthenticationFilter
 
         - id: sensor-service
           uri: lb://sensor-service
           predicates:
-            - Path=/api/sensors/**
+            - Path=/api/v1/sensors/**
           filters:
             - AuthenticationFilter

@@ -40,6 +40,7 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                 try {
                     jwtUtil.validateToken(authHeader);
                 } catch (Exception e) {
+                    System.out.println("JWT Validation Failed: " + e.getMessage());
                     exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                     return exchange.getResponse().setComplete();
                 }
