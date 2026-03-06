@@ -22,7 +22,8 @@ public class ZoneController {
     @PostMapping
     public ResponseEntity<?> createZone(@RequestHeader("Authorization") String token, @RequestBody Zone zone) {
         try {
-            return ResponseEntity.ok(zoneService.saveZone(zone, token));
+//            return ResponseEntity.ok(zoneService.saveZone(zone, token));
+            return ResponseEntity.ok(zoneService.saveZone(zone));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
