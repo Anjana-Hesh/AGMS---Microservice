@@ -1,17 +1,16 @@
 package com.agms.sensor_service.service;
 
-import com.agms.sensor_service.DTO.ExternalAuthRequest;
-import com.agms.sensor_service.DTO.ExternalAuthResponse;
-import com.agms.sensor_service.DTO.TelemetryDTO;
+import com.agms.sensor_service.DTO.*;
 import com.agms.sensor_service.client.AutomationClient;
 import com.agms.sensor_service.client.ExternalIotClient;
+import com.agms.sensor_service.client.ZoneServiceClient;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
-@EnableScheduling
 public class TelemetryService {
 
     @Autowired
@@ -20,38 +19,52 @@ public class TelemetryService {
     @Autowired
     private AutomationClient automationClient;
 
-    private String cachedToken;
-    private TelemetryDTO latestReading; // For debug view
+    @Autowired
+    private ZoneServiceClient zoneServiceClient;
 
-    /**
-     * The Fetcher: Runs every 10 seconds as per specifications.
-     */
+    private String cachedToken;
+    private TelemetryDTO latestReading;
+
     @Scheduled(fixedRateString = "${sensor.fetch-rate}")
     public void fetchAndPushTask() {
         try {
-            // 1. Authenticate with External API if token is missing
+
             if (cachedToken == null) {
                 ExternalAuthResponse auth = externalIotClient.login(new ExternalAuthRequest("Anjana", "1234"));
                 cachedToken = "Bearer " + auth.getAccessToken();
             }
 
-            // 2. Fetch latest telemetry
-            // Note: You should ideally get the deviceId from Zone Service or DB.
-            // Using a sample deviceId for the workflow.
-            String sampleDeviceId = "b751b8c9-644a-484c-ba3f-be63f9b27ad0";
-            TelemetryDTO data = externalIotClient.getLatestTelemetry(cachedToken, sampleDeviceId);
 
-            if (data != null) {
-                this.latestReading = data;
+            List<ZoneDTO> zones = zoneServiceClient.getAllZones();
 
-                // 3. The Pusher: Immediately send data to Automation Service
-                automationClient.pushData(data);
-                System.out.println("Data fetched and pushed to Automation Service successfully.");
+            if (zones == null || zones.isEmpty()) {
+                System.out.println("No zones found to fetch telemetry.");
+                return;
+            }
+
+            for (ZoneDTO zone : zones) {
+                if (zone.getDeviceId() != null && !zone.getDeviceId().isEmpty()) {
+
+                    TelemetryDTO data = externalIotClient.getLatestTelemetry(cachedToken, zone.getDeviceId());
+
+                    if (data != null) {
+
+                        data.setZoneId(zone.getId().toString());
+                        this.latestReading = data;
+
+                        try {
+                            automationClient.pushData(data);
+                            System.out.println("Telemetry pushed for Zone: " + zone.getName());
+                        } catch (Exception ex) {
+                            System.err.println("Pusher Error for zone " + zone.getName() + ": Automation Service unreachable.");
+                        }
+                    }
+                }
             }
 
         } catch (Exception e) {
-            System.err.println("Telemetry Fetching Error: " + e.getMessage());
-            cachedToken = null; // Clear token to retry login next time
+            System.err.println("Critical Telemetry Fetching Error: " + e.getMessage());
+            cachedToken = null;
         }
     }
 

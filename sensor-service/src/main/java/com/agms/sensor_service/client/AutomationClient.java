@@ -5,7 +5,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = "automation-service")
+@FeignClient(name = "automation-and-controller-service")
 public interface AutomationClient {
 
     @PostMapping("/api/v1/automation/process")
