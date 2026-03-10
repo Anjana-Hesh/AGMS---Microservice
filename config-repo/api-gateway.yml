@@ -31,3 +31,17 @@ spring:
             - Path=/api/v1/sensors/**
           filters:
             - AuthenticationFilter
+
+        - id: sensor-service
+          uri: lb://sensor-service
+          predicates:
+            - Path=/api/v1/sensors/**
+          filters:
+            - AuthenticationFilter
+
+        - id: automation-and-controller-service
+          uri: lb://automation-and-controller-service
+          predicates:
+            - Path=/api/v1/automation/**
+          filters:
+            - AuthenticationFilter
