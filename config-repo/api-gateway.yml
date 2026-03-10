@@ -45,3 +45,10 @@ spring:
             - Path=/api/v1/automation/**
           filters:
             - AuthenticationFilter
+
+        - id: crop-service
+          uri: lb://crop-service
+          predicates:
+            - Path=/api/v1/crops/**
+          filters:
+            - AuthenticationFilter
